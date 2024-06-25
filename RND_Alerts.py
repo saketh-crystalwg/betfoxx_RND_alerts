@@ -34,14 +34,18 @@ def send_mail(send_from, send_to, subject, text, server, port, username='', pass
     smtp.sendmail(send_from, send_to, msg.as_string())
     smtp.quit()
 
-start_time = datetime.utcnow() - timedelta(hours=2)
+start_time = datetime.utcnow() - timedelta(minutes=10)
 
-end_time = datetime.utcnow()- timedelta(hours=1)
+end_time = datetime.utcnow() - timedelta(minutes=5)
+
+end_time_1 = datetime.utcnow()
 
 # Extract only the date and hour from the current system datetime
 start_datetime = start_time.strftime('%Y-%m-%dT%H:00:00.000Z')
 
 end_datetime = end_time.strftime('%Y-%m-%dT%H:00:00.000Z')
+
+end_datetime_1 = end_time_1.strftime('%Y-%m-%dT%H:00:00.000Z')
 
 cust_url = 'https://adminwebapi.iqsoftllc.com/api/Main/ApiRequest?TimeZone=0&LanguageId=en'
 
@@ -67,25 +71,81 @@ cust_response_data = cust_response.json()
 cust_entities = cust_response_data['ResponseObject']['Entities']
 customers = pd.DataFrame(cust_entities)
 
+txn_url = 'https://adminwebapi.iqsoftllc.com/api/Main/ApiRequest?TimeZone=0&LanguageId=en'
+
+txn_data = {"Controller":"PaymentSystem",
+            "Method":"GetPaymentRequestsPaging",
+            "RequestObject":{
+                "Controller":"PaymentSystem",
+                "Method":"GetPaymentRequestsPaging",
+                "SkipCount":0,
+                "TakeCount":1000,
+                "OrderBy":None,
+                "FieldNameToOrderBy":"",
+                "Type":2,
+                "HasNote":False,
+                "FromDate":start_datetime,"ToDate":end_datetime_1},
+            "UserId":"1780","ApiKey":"betfoxx_api_key"}
+
+txn_response = requests.post(txn_url, json=txn_data)
+
+txn_response_data = txn_response.json()
+
+txn_entities = txn_response_data['ResponseObject']['PaymentRequests']['Entities']
+
+txns = pd.DataFrame(txn_entities)
+
+end_datetime_1 = end_time.strftime('%Y-%m-%dT%H:%M:%S.000Z')
+
+if txns is not None and txns.shape[0] > 0:
+    txns['Status'] = ['Approved' if x == 8 \
+                      else 'ApprovedManually' if x == 12 \
+                      else 'Cancelled' if x == 2 \
+                      else 'CancelPending' if x == 14 \
+                      else 'Confirmed' if x == 7 \
+                      else 'Declined' if x == 6 \
+                      else 'Deleted' if x == 11 \
+                      else 'Expired' if x == 13 \
+                      else 'Failed' if x == 9 \
+                      else 'Frozen' if x == 4 \
+                      else 'InProcess' if x == 3 \
+                      else 'Pay Pending' if x == 10 \
+                      else 'Pending' if x == 1 \
+                      else 'Splitted' if x == 15 \
+                      else 'Waiting For KYC' if x == 5 \
+                      else 'NA' for x in txns['State']]
+    txns["CreationTime"] = pd.to_datetime(txns["CreationTime"])
+    txns = txns.rename(columns={"CreationTime": "CreationTime_utc"})
+
 if customers is not None and customers.shape[0] > 0:
     customers_1 = customers[['Id', 'Email', 'FirstName','LastName','MobileNumber','CountryName','AffiliateId','LastDepositDate','CreationTime']]
     customers_2 = customers_1[customers['LastDepositDate'].isnull()]
     customers_2["CreationTime"] = pd.to_datetime(customers_2["CreationTime"])
-    customers_2 = customers_2.rename(columns={"CreationTime": "CreationTime_utc"})   
-
+    customers_2 = customers_2.rename(columns={"CreationTime": "CreationTime_utc"})
+    
+    if customers_2  is not None and customers_2.shape[0] > 0 and txns is not None and txns.shape[0] > 0:
+        customers_2['_key'] = 1
+        txns['_key'] = 1
+        cross_joined = pd.merge(customers_2, txns, on='_key').drop('_key', axis=1)
+        cross_joined_filtered = cross_joined[(cross_joined['Id_x'] == cross_joined['ClientId']) & (cross_joined['CreationTime_utc_y'] > cross_joined['CreationTime_utc_x'])]
+        filtered_client_ids = cross_joined_filtered['ClientId'].unique()
+        customers_2_filtered = customers_2[~customers_2['Id'].isin(filtered_client_ids)]
+        customers_2_filtered.drop('_key', axis=1,inplace = True)
+        
     filename = f'RND_{end_datetime}.xlsx'
 
     valid_filename = filename.replace(':', '-').replace('T', '_')
     
     with pd.ExcelWriter(valid_filename, engine='openpyxl') as writer:
-        customers_2.reset_index(drop=True).to_excel(writer, sheet_name="RND_Customers", index=False)
+        customers_2_filtered.reset_index(drop=True).to_excel(writer, sheet_name="RND_Customers", index=False)
 
     sub = f'Registered and Non Depositors {end_datetime}'
     
     subject = sub
     body = f"Hi,\n\n Attached contains the during the hour of  {end_datetime} (UTC) for Betfoxx \n\nThanks,\nSaketh"
     sender = "sakethg250@gmail.com"
-    recipients = ["saketh@crystalwg.com","sebastian@crystalwg.com","SANDRA@CRYSTALWG.COM","ron@crystalwg.com","camila@crystalwg.com","celeste@crystalwg.com","cristina@crystalwg.com","lina.betcoco@gmail.com","erika@crystalwg.com"]
+    recipients = ["saketh@crystalwg.com","sebastian@crystalwg.com","SANDRA@CRYSTALWG.COM","ron@crystalwg.com","camila@crystalwg.com","celeste@crystalwg.com","cristina@crystalwg.com","lina@crystalwg.com","erika@crystalwg.com","isaac@crystalwg.com",
+    "sakethg250@gmail.com","alberto@crystalwg.com"]
     password = "xjyb jsdl buri ylqr"
     send_mail(sender, recipients, subject, body, "smtp.gmail.com", 465, sender, password, valid_filename)
     
@@ -93,7 +153,7 @@ else:
     subject = f'Registered and Non Depositors {end_datetime}'
     body = "Hi,\n\nNo RND customers were found during the specified period.\n\nThanks,\nSaketh"
     sender = "sakethg250@gmail.com"
-    recipients = ["saketh@crystalwg.com","sebastian@crystalwg.com","SANDRA@CRYSTALWG.COM","ron@crystalwg.com","camila@crystalwg.com","celeste@crystalwg.com","cristina@crystalwg.com","lina.betcoco@gmail.com","erika@crystalwg.com"]
+    recipients = ["sakethg250@gmail.com"]
     password = "xjyb jsdl buri ylqr"
 
     send_mail(sender, recipients, subject, body, "smtp.gmail.com", 465, sender, password)
