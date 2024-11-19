@@ -10,6 +10,7 @@ from email.mime.text import MIMEText
 from email.utils import formatdate
 from email import encoders
 import datetime as dt
+import numpy as np
 from datetime import datetime, timedelta, timezone
 from openpyxl.styles import Alignment
 
@@ -118,10 +119,12 @@ if txns is not None and txns.shape[0] > 0:
     txns = txns.rename(columns={"CreationTime": "CreationTime_utc"})
 
 if customers is not None and customers.shape[0] > 0:
-    customers_1 = customers[['Id', 'Email', 'FirstName','LastName','MobileNumber','CountryName','AffiliateId','LastDepositDate','CreationTime']]
+    customers_1 = customers[['Id', 'Email', 'FirstName','LastName','MobileNumber','CountryName','AffiliateId','LastDepositDate','CreationTime','PartnerId']]
     customers_2 = customers_1[customers['LastDepositDate'].isnull()]
     customers_2["CreationTime"] = pd.to_datetime(customers_2["CreationTime"])
     customers_2 = customers_2.rename(columns={"CreationTime": "CreationTime_utc"})
+    customers_2['partner_name'] = np.where(customers_2['PartnerId'] == 20, 'BetFoxx', 
+                       np.where(customers_2['PartnerId'] == 137, 'slotsamigo', 'Others'))
     
     if customers_2  is not None and customers_2.shape[0] > 0 and txns is not None and txns.shape[0] > 0:
         customers_2['_key'] = 1
@@ -132,7 +135,7 @@ if customers is not None and customers.shape[0] > 0:
         customers_2_filtered = customers_2[~customers_2['Id'].isin(filtered_client_ids)]
         customers_2_filtered.drop('_key', axis=1,inplace = True)
         
-    filename = f'RND_{end_datetime}.xlsx'
+        filename = f'RND_{end_datetime}.xlsx'
 
     valid_filename = filename.replace(':', '-').replace('T', '_')
     
