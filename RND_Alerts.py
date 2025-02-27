@@ -146,18 +146,18 @@ if customers is not None and customers.shape[0] > 0:
     
     subject = sub
     body = f"Hi,\n\n Attached contains the during the hour of  {end_datetime} (UTC) for Betfoxx \n\nThanks,\nSaketh"
-    sender = "sakethg250@gmail.com"
-    recipients = ["saketh@crystalwg.com","ron@crystalwg.com","camila@crystalwg.com","celeste@crystalwg.com","lina@crystalwg.com","erika@crystalwg.com","isaac@crystalwg.com",
+    sender = "sakethg24@gmail.com"
+    recipients = ["saketh@crystalwg.com","camila@crystalwg.com","celeste@crystalwg.com","lina@crystalwg.com","erika@crystalwg.com","isaac@crystalwg.com",
     "sakethg250@gmail.com","alberto@crystalwg.com","shiley@crystalwg.com","ximena@crystalwg.com","camila.betcoco@gmail.com","stefania@crystalwg.com",
     "chris@crystalwg.com","juliet@crystalwg.com"]
-    password = "xjyb jsdl buri ylqr"
+    password = "cgtk gurq gdul ftuf"
     send_mail(sender, recipients, subject, body, "smtp.gmail.com", 465, sender, password, valid_filename)
     
 else:
     subject = f'Registered and Non Depositors {end_datetime}'
     body = "Hi,\n\nNo RND customers were found during the specified period.\n\nThanks,\nSaketh"
     sender = "sakethg24@gmail.com"
-    recipients = ["saketh@crystalwg.com","ron@crystalwg.com","camila@crystalwg.com","celeste@crystalwg.com","lina@crystalwg.com","erika@crystalwg.com","isaac@crystalwg.com",
+    recipients = ["saketh@crystalwg.com","camila@crystalwg.com","celeste@crystalwg.com","lina@crystalwg.com","erika@crystalwg.com","isaac@crystalwg.com",
     "sakethg250@gmail.com","alberto@crystalwg.com","shiley@crystalwg.com","ximena@crystalwg.com","camila.betcoco@gmail.com","stefania@crystalwg.com",
     "chris@crystalwg.com","juliet@crystalwg.com"]
     password = "cgtk gurq gdul ftuf"
