@@ -124,7 +124,8 @@ if customers is not None and customers.shape[0] > 0:
     customers_2["CreationTime"] = pd.to_datetime(customers_2["CreationTime"])
     customers_2 = customers_2.rename(columns={"CreationTime": "CreationTime_utc"})
     customers_2['partner_name'] = np.where(customers_2['PartnerId'] == 20, 'BetFoxx', 
-                       np.where(customers_2['PartnerId'] == 137, 'slotsamigo', 'Others'))
+                       np.where(customers_2['PartnerId'] == 137, 'slotsamigo', 
+                       np.where(customers_2['PartnerId'] == 140, 'slotsdynamite', 'Others')))
     
     if customers_2  is not None and customers_2.shape[0] > 0 and txns is not None and txns.shape[0] > 0:
         customers_2['_key'] = 1
